@@ -1,0 +1,301 @@
+import streamlit as st
+import os
+import json
+import io
+from src.audio_reader import read_wav_file
+from src.metadata_validator import validate_metadata
+from src.waveform import generate_waveform
+from src.fft_analyzer import generate_fft
+from src.lofargram import generate_lofargram
+from src.feature_extractor import extract_features
+from src.event_detector import detect_events
+from src.bearing_view import generate_bearing_view
+from src.export_utils import export_csv, export_png_bytes, generate_html_report
+
+st.set_page_config(page_title="Sonobuoy Acoustic Data Analysis Workbench", layout="wide")
+
+# ── Sidebar ────────────────────────────────────────────────────────────────────
+st.sidebar.title("Recorded Sonobuoy Acoustic Data Analysis Workbench")
+st.sidebar.caption(
+    "**Safety Note:** This POC is for recorded acoustic signal analysis and DSP "
+    "visualization only. It does not perform real-time sonobuoy operation, tactical "
+    "tracking, or target classification."
+)
+
+if st.sidebar.button("Generate Sample Data"):
+    try:
+        from src.sample_generator import generate_sample_data
+        generate_sample_data()
+        st.sidebar.success("Sample data generated in sample_data/")
+    except Exception as e:
+        st.sidebar.error(f"Error generating sample data: {e}")
+
+# ── Session state initialisation ───────────────────────────────────────────────
+for key, default in [
+    ("data", None), ("sample_rate", None), ("channels", None),
+    ("metadata", None), ("waveform_stats", None), ("fft_stats", None),
+    ("features_df", None), ("events_df", None), ("bearing_df", None),
+]:
+    if key not in st.session_state:
+        st.session_state[key] = default
+
+# ── Tabs ───────────────────────────────────────────────────────────────────────
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    "📂 Upload", "📈 Signal Overview", "📊 FFT",
+    "🌊 LOFARgram", "🔬 Features", "⚡ Events",
+    "🧭 Bearing View", "💾 Export"
+])
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 1 — Upload
+# ══════════════════════════════════════════════════════════════════════════════
+with tab1:
+    st.header("File Upload")
+
+    wav_file = st.file_uploader("Upload WAV file", type=["wav"])
+    metadata_file = st.file_uploader("Upload metadata.json (optional)", type=["json"])
+
+    if wav_file:
+        try:
+            data, sample_rate, channels = read_wav_file(wav_file)
+            st.session_state.data = data
+            st.session_state.sample_rate = sample_rate
+            st.session_state.channels = channels
+            st.success("WAV file loaded successfully.")
+
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Sample Rate", f"{sample_rate} Hz")
+            col2.metric("Channels", channels)
+            col3.metric("Duration", f"{data.shape[0] / sample_rate:.2f} s")
+            col4.metric("Total Samples", f"{data.shape[0]:,}")
+
+        except Exception as e:
+            st.error(f"Error loading WAV file: {e}")
+
+    if metadata_file:
+        try:
+            metadata = json.load(metadata_file)
+            st.session_state.metadata = metadata
+            st.success("Metadata loaded.")
+            with st.expander("Metadata details", expanded=True):
+                validate_metadata(metadata)
+        except Exception as e:
+            st.error(f"Error loading metadata: {e}")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 2 — Signal Overview (Waveform)
+# ══════════════════════════════════════════════════════════════════════════════
+with tab2:
+    st.header("Signal Overview — Waveform")
+    if st.session_state.data is not None:
+        try:
+            fig, stats = generate_waveform(st.session_state.data, st.session_state.sample_rate)
+            st.session_state.waveform_stats = stats
+            st.pyplot(fig)
+            st.subheader("Statistics")
+            st.json(stats)
+        except Exception as e:
+            st.error(f"Waveform error: {e}")
+    else:
+        st.info("Please upload a WAV file in the Upload tab.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 3 — FFT
+# ══════════════════════════════════════════════════════════════════════════════
+with tab3:
+    st.header("FFT Spectrum")
+    if st.session_state.data is not None:
+        try:
+            fig, stats = generate_fft(st.session_state.data, st.session_state.sample_rate)
+            st.session_state.fft_stats = stats
+            st.pyplot(fig)
+            st.subheader("FFT Statistics")
+            st.json(stats)
+        except Exception as e:
+            st.error(f"FFT error: {e}")
+    else:
+        st.info("Please upload a WAV file in the Upload tab.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 4 — LOFARgram
+# ══════════════════════════════════════════════════════════════════════════════
+with tab4:
+    st.header("LOFARgram")
+    if st.session_state.data is not None:
+        col1, col2, col3 = st.columns(3)
+        max_freq = col1.slider("Max Frequency (Hz)", 100, 10000, 2000)
+        window_size = col2.slider("Window Size (samples)", 256, 4096, 1024, step=256)
+        overlap = col3.slider("Overlap (samples)", 0, window_size - 1, min(512, window_size - 1))
+        try:
+            fig = generate_lofargram(
+                st.session_state.data, st.session_state.sample_rate,
+                max_freq, window_size, overlap
+            )
+            st.pyplot(fig)
+        except Exception as e:
+            st.error(f"LOFARgram error: {e}")
+    else:
+        st.info("Please upload a WAV file in the Upload tab.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 5 — Feature Extraction
+# ══════════════════════════════════════════════════════════════════════════════
+with tab5:
+    st.header("Feature Extraction")
+    if st.session_state.data is not None:
+        col1, col2 = st.columns(2)
+        window_size_sec = col1.slider("Window Size (sec)", 0.5, 5.0, 1.0, step=0.5)
+        overlap_percent = col2.slider("Overlap (%)", 0, 90, 50, step=10)
+
+        if st.button("Run Feature Extraction"):
+            try:
+                df = extract_features(
+                    st.session_state.data, st.session_state.sample_rate,
+                    window_size_sec, overlap_percent
+                )
+                st.session_state.features_df = df
+            except Exception as e:
+                st.error(f"Feature extraction error: {e}")
+
+        if st.session_state.features_df is not None:
+            st.dataframe(st.session_state.features_df, use_container_width=True)
+            csv_bytes = export_csv(st.session_state.features_df, "features.csv")
+            st.download_button("⬇ Download Features CSV", csv_bytes, "features.csv", "text/csv")
+    else:
+        st.info("Please upload a WAV file in the Upload tab.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 6 — Event Detection
+# ══════════════════════════════════════════════════════════════════════════════
+with tab6:
+    st.header("Event Detection")
+    if st.session_state.data is not None:
+        threshold = st.slider(
+            "RMS Threshold (0 = auto: mean+std)", 0.0, 1.0, 0.0, step=0.01,
+            help="Set to 0 for automatic threshold based on signal statistics."
+        )
+
+        if st.button("Run Event Detection"):
+            try:
+                df = detect_events(
+                    st.session_state.data, st.session_state.sample_rate,
+                    threshold if threshold > 0 else None
+                )
+                st.session_state.events_df = df
+            except Exception as e:
+                st.error(f"Event detection error: {e}")
+
+        if st.session_state.events_df is not None:
+            st.metric("Events Detected", len(st.session_state.events_df))
+            st.dataframe(st.session_state.events_df, use_container_width=True)
+            csv_bytes = export_csv(st.session_state.events_df, "events.csv")
+            st.download_button("⬇ Download Events CSV", csv_bytes, "events.csv", "text/csv")
+    else:
+        st.info("Please upload a WAV file in the Upload tab.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 7 — Bearing View
+# ══════════════════════════════════════════════════════════════════════════════
+with tab7:
+    st.header("Polar Bearing View")
+    if st.session_state.data is None:
+        st.info("Please upload a WAV file in the Upload tab.")
+    elif (st.session_state.channels or 1) < 2:
+        st.warning(
+            "Bearing View requires stereo/multi-channel WAV or directional sonobuoy data. "
+            "Mono WAV can generate waveform, FFT, and LOFARgram only."
+        )
+    else:
+        col1, col2, col3 = st.columns(3)
+        sensor_spacing = col1.slider("Sensor Spacing (m)", 0.1, 2.0, 0.75, step=0.05)
+        sound_speed = col2.slider("Sound Speed (m/s)", 1000, 2000, 1500, step=10)
+        array_heading = col3.slider("Array Heading (deg)", 0, 360, 0, step=5)
+
+        col4, col5 = st.columns(2)
+        bearing_window = col4.slider("Bearing Window (sec)", 0.1, 2.0, 0.5, step=0.1)
+        rms_threshold = col5.slider("RMS Threshold", 0.0, 1.0, 0.05, step=0.01)
+
+        if st.button("Compute Bearing"):
+            try:
+                fig, df = generate_bearing_view(
+                    st.session_state.data, st.session_state.sample_rate,
+                    sensor_spacing, sound_speed, array_heading,
+                    bearing_window, rms_threshold
+                )
+                st.session_state.bearing_df = df
+                st.pyplot(fig)
+                if df.empty:
+                    st.warning("No bearing estimates above threshold. Try lowering the RMS threshold.")
+                else:
+                    st.dataframe(df, use_container_width=True)
+                    csv_bytes = export_csv(df, "bearing.csv")
+                    st.download_button("⬇ Download Bearing CSV", csv_bytes, "bearing.csv", "text/csv")
+            except Exception as e:
+                st.error(f"Bearing view error: {e}")
+
+        elif st.session_state.bearing_df is not None:
+            st.dataframe(st.session_state.bearing_df, use_container_width=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 8 — Export
+# ══════════════════════════════════════════════════════════════════════════════
+with tab8:
+    st.header("Export & Download")
+    if st.session_state.data is None:
+        st.info("Please upload a WAV file in the Upload tab.")
+    else:
+        st.subheader("Plots")
+        col1, col2, col3, col4 = st.columns(4)
+
+        wf_bytes = export_png_bytes("outputs/waveform.png")
+        if wf_bytes:
+            col1.download_button("⬇ Waveform PNG", wf_bytes, "waveform.png", "image/png")
+        else:
+            col1.caption("Waveform PNG not yet generated. Visit Signal Overview tab.")
+
+        fft_bytes = export_png_bytes("outputs/fft.png")
+        if fft_bytes:
+            col2.download_button("⬇ FFT PNG", fft_bytes, "fft.png", "image/png")
+        else:
+            col2.caption("FFT PNG not yet generated. Visit FFT tab.")
+
+        lo_bytes = export_png_bytes("outputs/lofargram.png")
+        if lo_bytes:
+            col3.download_button("⬇ LOFARgram PNG", lo_bytes, "lofargram.png", "image/png")
+        else:
+            col3.caption("LOFARgram PNG not yet generated. Visit LOFARgram tab.")
+
+        br_bytes = export_png_bytes("outputs/bearing.png")
+        if br_bytes:
+            col4.download_button("⬇ Bearing PNG", br_bytes, "bearing.png", "image/png")
+        else:
+            col4.caption("Bearing PNG not yet generated. Visit Bearing View tab.")
+
+        st.subheader("Data Tables")
+        col5, col6, col7 = st.columns(3)
+
+        if st.session_state.features_df is not None:
+            csv_bytes = export_csv(st.session_state.features_df, "features.csv")
+            col5.download_button("⬇ Features CSV", csv_bytes, "features.csv", "text/csv")
+        else:
+            col5.caption("Features CSV not yet generated. Visit Features tab.")
+
+        if st.session_state.events_df is not None:
+            csv_bytes = export_csv(st.session_state.events_df, "events.csv")
+            col6.download_button("⬇ Events CSV", csv_bytes, "events.csv", "text/csv")
+        else:
+            col6.caption("Events CSV not yet generated. Visit Events tab.")
+
+        if st.session_state.bearing_df is not None:
+            csv_bytes = export_csv(st.session_state.bearing_df, "bearing.csv")
+            col7.download_button("⬇ Bearing CSV", csv_bytes, "bearing.csv", "text/csv")
+        else:
+            col7.caption("Bearing CSV not yet generated. Visit Bearing View tab.")
+
+        st.subheader("HTML Summary Report")
+        if st.button("Generate Report"):
+            try:
+                report_bytes = generate_html_report(st.session_state)
+                st.download_button("⬇ Download HTML Report", report_bytes, "sonobuoy_report.html", "text/html")
+            except Exception as e:
+                st.error(f"Report generation error: {e}")

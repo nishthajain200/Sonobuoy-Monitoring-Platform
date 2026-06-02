@@ -1,0 +1,9 @@
+id,name,latitude,longitude,deploymentTime,numberOfChannels,sampleRate,recordingDuration,status,bearingToTarget,distanceToTarget_km
+SB001,Barrier North-West,21.55,87.6,2026-05-25T04:12:00Z,4,48000,900,Active,105.0,17.1
+SB002,Barrier West,21.53,87.68,2026-05-25T04:12:15Z,4,48000,885,Active,105.0,8.6
+SB003,Barrier Centre,21.5,87.75,2026-05-25T04:12:30Z,4,48000,870,Active,42.9,1.5
+SB004,Barrier East,21.52,87.82,2026-05-25T04:12:45Z,4,48000,855,Active,259.8,6.3
+SB005,Barrier South-East,21.55,87.9,2026-05-25T04:13:00Z,4,48000,840,Active,252.9,15.1
+SB006,Search South-West,21.48,87.65,2026-05-25T04:13:15Z,4,48000,825,Active,73.7,11.9
+SB007,Search South,21.46,87.78,2026-05-25T04:13:30Z,4,48000,810,Active,339.6,5.9
+SB008,Datum Buoy,21.505,87.77,2026-05-25T04:13:45Z,4,48000,795,Active,298.3,1.2

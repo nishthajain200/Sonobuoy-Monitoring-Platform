@@ -1,0 +1,4 @@
+event_id,start_time_sec,end_time_sec,dominant_frequency_hz,rms,confidence
+0,4.5,5.5,300.0,0.181584,0.3058
+1,5.0,6.0,300.0,0.230416,1.0
+2,5.5,6.5,300.0,0.18202,0.312

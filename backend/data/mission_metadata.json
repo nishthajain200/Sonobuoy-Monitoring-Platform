@@ -1,0 +1,78 @@
+{
+  "missionId": "BOBP-2026-0525",
+  "missionName": "Bay of Bengal ASW Patrol \u2013 Mandarmani Sector",
+  "areaOfOperations": "Mandarmani coast, West Bengal, Bay of Bengal",
+  "targetClassification": "Diesel-Electric Submarine (Kilo-class, Project 877EKM)",
+  "estimatedTargetPosition": {
+    "latitude": 21.51,
+    "longitude": 87.76
+  },
+  "startTime": "2026-05-25T04:12:00Z",
+  "endTime": "2026-05-25T04:27:00Z",
+  "sonobuoys": [
+    {
+      "id": "SB001",
+      "name": "Barrier North-West",
+      "latitude": 21.55,
+      "longitude": 87.6,
+      "bearingToTarget": 105.0,
+      "distanceToTarget_km": 17.1
+    },
+    {
+      "id": "SB002",
+      "name": "Barrier West",
+      "latitude": 21.53,
+      "longitude": 87.68,
+      "bearingToTarget": 105.0,
+      "distanceToTarget_km": 8.6
+    },
+    {
+      "id": "SB003",
+      "name": "Barrier Centre",
+      "latitude": 21.5,
+      "longitude": 87.75,
+      "bearingToTarget": 42.9,
+      "distanceToTarget_km": 1.5
+    },
+    {
+      "id": "SB004",
+      "name": "Barrier East",
+      "latitude": 21.52,
+      "longitude": 87.82,
+      "bearingToTarget": 259.8,
+      "distanceToTarget_km": 6.3
+    },
+    {
+      "id": "SB005",
+      "name": "Barrier South-East",
+      "latitude": 21.55,
+      "longitude": 87.9,
+      "bearingToTarget": 252.9,
+      "distanceToTarget_km": 15.1
+    },
+    {
+      "id": "SB006",
+      "name": "Search South-West",
+      "latitude": 21.48,
+      "longitude": 87.65,
+      "bearingToTarget": 73.7,
+      "distanceToTarget_km": 11.9
+    },
+    {
+      "id": "SB007",
+      "name": "Search South",
+      "latitude": 21.46,
+      "longitude": 87.78,
+      "bearingToTarget": 339.6,
+      "distanceToTarget_km": 5.9
+    },
+    {
+      "id": "SB008",
+      "name": "Datum Buoy",
+      "latitude": 21.505,
+      "longitude": 87.77,
+      "bearingToTarget": 298.3,
+      "distanceToTarget_km": 1.2
+    }
+  ]
+}

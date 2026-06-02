@@ -1,0 +1,6 @@
+signatureId,platformType,fundamentalFrequency,harmonics,description
+SIG001,Kilo-class Submarine (877EKM),50,"[100,150,200]","Diesel-electric submarine, diesel-generator tonal at 50 Hz, blade-rate 8 Hz"
+SIG002,Scorpene-class Submarine,45,"[90,135,180]","Diesel-electric submarine, low-speed transit, AIP mode"
+SIG003,Merchant Vessel (bulk carrier),72,[144],"Large merchant vessel, single-screw, slow-speed"
+SIG004,SSN Nuclear Submarine,42,"[84,126,168]","Nuclear submarine, reactor coolant pump tonal"
+SIG005,Fishing Trawler,60,"[120,180,240]",Commercial fishing vessel with active trawl winch

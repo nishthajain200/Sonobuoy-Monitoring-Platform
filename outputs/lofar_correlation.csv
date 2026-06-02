@@ -1,0 +1,6 @@
+vessel_id,vessel_name,vessel_class,description,shaft_rate_hz,blade_count,db_lines,matched_lines,match_ratio,confidence_score,matched_frequencies_hz
+VES-001,Surface Merchant (Type-A),Merchant,"Large surface merchant — 4-blade fixed-pitch propeller. Shaft: 5 Hz, Blade: 20 Hz.",5.0,4.0,8,8,1.0,1.0,"[5.0, 10.0, 15.0, 20.0, 40.0, 60.0, 120.0, 240.0]"
+VES-002,Surface Warship (Type-B),Warship,"Surface combatant — 5-blade controllable-pitch propeller. Shaft: 8 Hz, Blade: 40 Hz.",8.0,5.0,8,5,0.625,0.696,"[8.0, 16.0, 24.0, 40.0, 80.0]"
+VES-003,Diesel Submarine (Type-C),Submarine,"Diesel-electric submarine — 7-blade skewed propeller. Shaft: 3 Hz, Blade: 21 Hz.",3.0,7.0,9,5,0.556,0.608,"[3.0, 6.0, 9.0, 21.0, 42.0]"
+BIO-001,Cetacean — Humpback Whale,Biological,Humpback whale low-frequency song patterns (20–2000 Hz).,,,4,1,0.25,0.385,[80.0]
+VES-004,Fast Patrol Vessel (Type-D),Patrol,"High-speed gas-turbine patrol craft — 4-blade propeller. Shaft: 12 Hz, Blade: 48 Hz.",12.0,4.0,7,2,0.286,0.333,"[12.0, 24.0]"
