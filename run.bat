@@ -20,10 +20,46 @@ where npm >nul 2>&1
 if errorlevel 1 (
     where npm.cmd >nul 2>&1
     if errorlevel 1 (
-        echo ERROR: npm is not installed or not in PATH.
-        echo Please install Node.js from https://nodejs.org/
-        pause
-        exit /b 1
+        echo Node.js is not installed. Installing now...
+        echo.
+
+        :: Download Node.js LTS installer using PowerShell
+        set "NODE_INSTALLER=%TEMP%\node-install.msi"
+        echo Downloading Node.js LTS installer...
+        powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.16.0/node-v22.16.0-x64.msi' -OutFile '%TEMP%\node-install.msi'"
+        if errorlevel 1 (
+            echo ERROR: Failed to download Node.js installer.
+            echo Please install manually from https://nodejs.org/
+            pause
+            exit /b 1
+        )
+
+        echo Installing Node.js (this may ask for admin permission)...
+        msiexec /i "%TEMP%\node-install.msi" /qb
+        if errorlevel 1 (
+            echo ERROR: Node.js installation failed.
+            echo Please install manually from https://nodejs.org/
+            pause
+            exit /b 1
+        )
+
+        del "%TEMP%\node-install.msi" >nul 2>&1
+
+        :: Refresh PATH so npm is available in this session
+        set "PATH=%ProgramFiles%\nodejs;%PATH%"
+
+        where npm >nul 2>&1
+        if errorlevel 1 (
+            where npm.cmd >nul 2>&1
+            if errorlevel 1 (
+                echo ERROR: Node.js installed but npm still not found.
+                echo Please close this window, open a new terminal, and run run.bat again.
+                pause
+                exit /b 1
+            )
+        )
+        echo Node.js installed successfully.
+        echo.
     )
 )
 
