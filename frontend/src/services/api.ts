@@ -52,6 +52,7 @@ export const getLofarMatches = (sonobuoyId?: string, fromDatetime?: string, toDa
 
 // ── Bearing ─────────────────────────────────────────────────────────────────
 export const getBearing = (sbId: string) => api.get(`/bearing/${sbId}`).then(r => r.data);
+export const getBearingAllChannels = (sbId: string) => api.get(`/bearing/${sbId}/all-channels`).then(r => r.data);
 
 // ── Correlation ─────────────────────────────────────────────────────────────
 export const runCorrelation = (sonobuoyIds: string[]) =>

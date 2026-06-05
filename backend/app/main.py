@@ -20,7 +20,7 @@ from .ingestion import ingest_wav, read_channel, read_all_channels
 from .dsp import compute_fft, compute_spectrogram
 from .harmonic_detection import detect_harmonics
 from .lofar_matching import seed_lofar_database, match_signature, store_match
-from .bearing import estimate_bearing, get_bearing_data
+from .bearing import estimate_bearing, get_bearing_data, estimate_bearing_all_channels
 from .correlation import correlate_sonobuoys
 from .sample_data_generator import generate_all_data
 
@@ -369,6 +369,18 @@ def get_bearing(sb_id: str, db: Session = Depends(get_db)):
         result = estimate_bearing(signals, sr, sb_id, freq, db)
         return [result]
     return results
+
+
+@app.get("/api/bearing/{sb_id}/all-channels")
+def get_bearing_all_channels(sb_id: str, db: Session = Depends(get_db)):
+    sb = db.query(Sonobuoy).filter(Sonobuoy.id == sb_id).first()
+    if not sb:
+        raise HTTPException(404, "Sonobuoy not found")
+    data, sr = read_all_channels(sb_id)
+    signals = [data[:, ch] for ch in range(data.shape[1])]
+    det = detect_harmonics(signals[0], sr, sb_id, 0)
+    freq = det["fundamentalFrequency"] or 48
+    return estimate_bearing_all_channels(signals, sr, sb_id, freq)
 
 
 # ── Correlation ───────────────────────────────────────────────────────────────
